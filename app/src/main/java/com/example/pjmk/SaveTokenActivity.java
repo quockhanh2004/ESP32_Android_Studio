@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -144,7 +146,16 @@ public class SaveTokenActivity extends AppCompatActivity {
     }
 
 
+    
+    
     public static Context getAppContext() {
         return appContext;
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent(SaveTokenActivity.this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 }

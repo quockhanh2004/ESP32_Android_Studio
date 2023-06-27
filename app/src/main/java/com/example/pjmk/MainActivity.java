@@ -26,9 +26,10 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private TextView Nhiet, Am;
-    private Blynk Blynk;
+    private Blynk blynk;
     private final List<ToggleButton> tg = new ArrayList<>();
     private ImageView Status;
+    private Button btn_0, btn_1;
     private static final int UPDATE_INTERVAL = 1000; // Thời gian cập nhật (1 giây)
     static Thermal thermal;
     static int vNumberThermal;
@@ -36,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
     boolean send, get, token;
     private boolean online = false;
     private boolean isFetchingData = false;
-    Thread thread1 = new Thread();
     static List<Boolean> saveATV = new ArrayList<>();
     static List<String> saveNAME = new ArrayList<>();
     static List<Integer> saveVNUMBER = new ArrayList<>();
@@ -49,16 +49,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         appContext = getApplicationContext();
-        Blynk = Blynk.getInstance(this);
-        Blynk.getToken(this);
+        blynk = Blynk.getInstance(this);
+        blynk.getToken(this);
 
 
         //gán id các widget
         Nhiet = findViewById(R.id.Nhiet);
         Am = findViewById(R.id.Am);
 
-        Button btn_0 = findViewById(R.id.btn_0);
-        Button btn_1 = findViewById(R.id.btn_1);
+        btn_0 = findViewById(R.id.btn_0);
+        btn_1 = findViewById(R.id.btn_1);
 
         Button btn_ChangeToken = findViewById(R.id.btn_ChangeToken);
         Status = findViewById(R.id.Status);
@@ -77,13 +77,17 @@ public class MainActivity extends AppCompatActivity {
  * -------------------------------------------------------------------------------------------------
  */
         btn_0.setOnClickListener(v -> {
-            vibrator.vibrate(12);
-            sendbtn_0();
+            if (saveATV.get(4) && !send) {
+                vibrator.vibrate(12);
+                sendbtn_0();
+            }
         });
 
         btn_1.setOnClickListener(v -> {
-            vibrator.vibrate(12);
-            sendbtn_1();
+            if (saveATV.get(5) && !send) {
+                vibrator.vibrate(12);
+                sendbtn_1();
+            }
         });
 /**
  * -------------------------------------------------------------------------------------------------
@@ -103,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     vibrator.vibrate(12);
                     send = true;
-                    Blynk.sendData(saveVNUMBER.get(0), value);
+                    blynk.sendData(saveVNUMBER.get(0), value);
                     System.out.println(value);
                     send = false;
                 }
@@ -126,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     vibrator.vibrate(12);
                     send = true;
-                    Blynk.sendData(saveVNUMBER.get(1), value);
+                    blynk.sendData(saveVNUMBER.get(1), value);
                     System.out.println(value);
                     send = false;
                 }
@@ -149,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     vibrator.vibrate(12);
                     send = true;
-                    Blynk.sendData(saveVNUMBER.get(2), value);
+                    blynk.sendData(saveVNUMBER.get(2), value);
                     System.out.println(value);
                     send = false;
                 }
@@ -172,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     vibrator.vibrate(12);
                     send = true;
-                    Blynk.sendData(saveVNUMBER.get(3), value);
+                    blynk.sendData(saveVNUMBER.get(3), value);
 //                    System.out.println(value);
                     send = false;
                 }
@@ -280,6 +284,11 @@ public class MainActivity extends AppCompatActivity {
             tg.get(i).setTextOff(saveNAME.get(i));
         }
 
+        btn_0.setText(saveNAME.get(4));
+        btn_0.setActivated(saveATV.get(4));
+        btn_1.setText(saveNAME.get(5));
+        btn_1.setActivated(saveATV.get(5));
+
         if (!send) {
             send = true;
             if (!isFetchingData) {
@@ -330,7 +339,7 @@ public class MainActivity extends AppCompatActivity {
      * các hàm kiểm tra trạng thái
      */
     public void getNhietDo() {
-        Blynk.fetchData(vNumberThermal, new Blynk.DataCallback() {
+        blynk.fetchData(vNumberThermal, new Blynk.DataCallback() {
             @Override
             public void onSuccess(String data) {
                 Nhiet.setText(data + " °C");
@@ -347,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
      * -------------------------------------------------------------------------------------------------
      */
     public void getDoAm() {
-        Blynk.fetchData(vNumberHumidity, new Blynk.DataCallback() {
+        blynk.fetchData(vNumberHumidity, new Blynk.DataCallback() {
             @Override
             public void onSuccess(String data) {
                 Am.setText(data + " %");
@@ -366,14 +375,10 @@ public class MainActivity extends AppCompatActivity {
     public void gettg(boolean active, int number_tg, int VNumber) {
 //        tg.get(number_tg).setActivated(saveATV.get(number_tg));
         if (active) {
-            Blynk.fetchData(VNumber, new Blynk.DataCallback() {
+            blynk.fetchData(VNumber, new Blynk.DataCallback() {
                 @Override
                 public void onSuccess(String data) {
-                    if (data.equals("1")) {
-                        tg.get(number_tg).setChecked(true);
-                    } else {
-                        tg.get(number_tg).setChecked(false);
-                    }
+                    tg.get(number_tg).setChecked(data.equals("1"));
                 }
 
                 @Override
@@ -392,30 +397,34 @@ public class MainActivity extends AppCompatActivity {
      * -------------------------------------------------------------------------------------------------
      */
     public void sendbtn_0() {
+        send = true;
         try {
-            Blynk.sendData(25, "1");
-            thread1.sleep(500);
-            Blynk.sendData(25, "0");
+            blynk.sendData(saveVNUMBER.get(4), "1");
+            Thread.sleep(500);
+            blynk.sendData(saveVNUMBER.get(5), "0");
         } catch (Exception e) {
             Toast.makeText(this, "Gửi lệnh WOL thất bại", Toast.LENGTH_SHORT).show();
         }
+        send = false;
     }
 
     public void sendbtn_1() {
+        send = true;
         try {
-            Blynk.sendData(33, "1");
-            thread1.sleep(3000);
-            Blynk.sendData(33, "0");
+            blynk.sendData(saveVNUMBER.get(5), "1");
+            Thread.sleep(3000);
+            blynk.sendData(saveVNUMBER.get(5), "0");
         } catch (Exception e) {
             Toast.makeText(this, "Gửi lệnh btn_1 thất bại", Toast.LENGTH_SHORT).show();
         }
+        send = false;
     }
 
     /**
      * -------------------------------------------------------------------------------------------------
      */
     public void isOnline() {
-        Blynk.isOnline(new Blynk.DataCallback() {
+        blynk.isOnline(new Blynk.DataCallback() {
             @Override
             public void onSuccess(String data) {
                 if (Boolean.parseBoolean(data)) {
